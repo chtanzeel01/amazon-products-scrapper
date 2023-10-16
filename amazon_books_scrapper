@@ -1,0 +1,47 @@
+from bs4 import BeautifulSoup
+import cfscrape
+import csv
+import time
+
+
+def scrape(soup):
+    items = soup.find_all(id="gridItemRoot")
+    print(items)
+    results = []
+
+    for item in items:
+        image = item.find("img")["src"]
+        name_tag = item.find("div", class_="p13n-sc-truncate-desktop-type2 p13n-sc-truncated")
+        name = name_tag.get_text() if name_tag else None
+        
+        price_tag = item.find("span", class_="a-size-base a-color-price")
+        price = price_tag.find("span", class_="_cDEzb_p13n-sc-price_3mJ9Z").get_text() if price_tag else None
+        
+        rating_tag = item.find("i", class_="a-icon a-icon-star-small a-star-small-5 aok-align-top")
+        rating = rating_tag.find("span", class_="a-icon-alt").get_text() if rating_tag else None
+        total_ratings = rating_tag.find("span", class_="a-size-small").get_text() if rating_tag else None
+        
+        results.append({
+            "image": image,
+            "name": name,
+            "price": price,
+            "rating": rating,
+            "total_ratings": total_ratings
+        })
+    
+    return results
+
+def get(url):
+    return BeautifulSoup(cfscrape.create_scraper().get(url).text, 'lxml')
+
+url="https://www.amazon.com/books-used-books-textbooks/b?ie=UTF8&node=283155"
+soup=get(url)
+#print(soup)
+while "403 Forbidden" in soup.text:
+    print("Forbidden....Trying again in 10 seconds")
+    time.sleep(10)
+    soup=get(url)
+result=scrape(soup)
+print(result)
+
+
